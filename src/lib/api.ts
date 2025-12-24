@@ -189,6 +189,61 @@ class ApiClient {
   }
 
   /**
+   * Get semantic mappings for a dataset.
+   */
+  async getMappings(datasetId: string): Promise<{
+    dataset_id: string;
+    mappings: Record<string, string>;
+  }> {
+    return this.request(`/api/mappings/${datasetId}`);
+  }
+
+  /**
+   * Save a semantic mapping (concept → column).
+   */
+  async saveMapping(
+    datasetId: string,
+    concept: string,
+    columnName: string
+  ): Promise<{
+    dataset_id: string;
+    concept: string;
+    column_name: string;
+    success: boolean;
+  }> {
+    return this.request(`/api/mappings/${datasetId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        concept,
+        column_name: columnName,
+      }),
+    });
+  }
+
+  /**
+   * Save multiple semantic mappings at once.
+   */
+  async saveMappings(
+    datasetId: string,
+    mappings: Record<string, string>
+  ): Promise<{
+    dataset_id: string;
+    mappings: Record<string, string>;
+    success: boolean;
+  }> {
+    return this.request(`/api/mappings/${datasetId}/bulk`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ mappings }),
+    });
+  }
+
+  /**
    * Execute a natural language question on a dataset.
    * Returns computed results (no raw data sent to AI).
    */

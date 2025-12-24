@@ -5,12 +5,21 @@ A story-first data understanding API.
 All analysis is deterministic. AI only narrates.
 """
 
+import logging
+import sys
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from routers import upload, health, insights, question_suggestions, chat
+from routers import upload, health, insights, question_suggestions, chat, mappings
 from services.storage import storage
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
 
 
 @asynccontextmanager
@@ -59,6 +68,7 @@ app.include_router(health.router)
 app.include_router(insights.router)
 app.include_router(question_suggestions.router)
 app.include_router(chat.router)
+app.include_router(mappings.router)
 
 
 @app.get("/")

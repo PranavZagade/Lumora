@@ -13,6 +13,7 @@ import { HealthCheck } from "@/components/app/health-check";
 import { DatasetSummary } from "@/components/app/dataset-summary";
 import { InsightList } from "@/components/app/insight-card";
 import { SuggestedQuestions } from "@/components/app/suggested-questions";
+import { MappingSelector } from "@/components/app/mapping-selector";
 import { useSessionStore } from "@/stores/session";
 import { api, type SuggestedQuestion } from "@/lib/api";
 import type {
@@ -406,10 +407,37 @@ export function AppContent() {
       // Format result for display
       let responseText = "";
       
-      if (result.result.type === "dataset_summary") {
+      // FIX: Use backend-formatted message if available (metadata or formatted result)
+      if (result.result.type === "metadata" && result.result.message) {
+        responseText = result.result.message;
+      } else if (result.result.message) {
+        // Use backend-formatted message for all result types
+        responseText = result.result.message;
+      } else if (result.result.type === "dataset_summary") {
         responseText = `This dataset contains **${result.result.rows.toLocaleString()}** rows and **${result.result.columns}** columns.`;
       } else if (result.result.type === "clarification") {
-        responseText = result.result.message || "Please clarify what you want to analyze.";
+        const clarificationResult = result.result as {
+          type: "clarification";
+          message?: string;
+          requires_mapping?: boolean;
+          missing_concepts?: string[];
+          available_columns?: string[];
+        };
+        
+        if (clarificationResult.requires_mapping && clarificationResult.missing_concepts) {
+          // Handle mapping request - store in message with special flag
+          addMessage({
+            role: "assistant",
+            content: clarificationResult.message || "Please map concepts to columns.",
+            requiresMapping: true,
+            missingConcepts: clarificationResult.missing_concepts,
+            availableColumns: clarificationResult.available_columns || [],
+          });
+          setIsTyping(false);
+          return;
+        }
+        
+        responseText = clarificationResult.message || "Please clarify what you want to analyze.";
       } else if (result.result.type === "scalar") {
         const agg = result.result.aggregation || "value";
         const value = result.result.value;
@@ -502,6 +530,34 @@ export function AppContent() {
         data.forEach((item) => {
           responseText += `${item.rank}. ${item.group}: ${item.value.toLocaleString()}\n`;
         });
+      } else if (result.result.type === "empty") {
+        responseText = (result.result as { type: "empty"; message?: string }).message || "No results found.";
+      } else if (result.result.type === "table") {
+        const tableResult = result.result as {
+          type: "table";
+          data: Array<Record<string, unknown>>;
+          columns?: string[];
+        };
+        const data = tableResult.data;
+        const columns = tableResult.columns || (data.length > 0 ? Object.keys(data[0]) : []);
+        
+        responseText = `Here are the results:\n\n`;
+        if (data.length > 0) {
+          // Show first 10 rows
+          data.slice(0, 10).forEach((row, idx) => {
+            responseText += `Row ${idx + 1}:\n`;
+            columns.forEach((col) => {
+              const val = row[col];
+              responseText += `  ${col}: ${val !== null && val !== undefined ? String(val) : "null"}\n`;
+            });
+            responseText += "\n";
+          });
+          if (data.length > 10) {
+            responseText += `... and ${data.length - 10} more rows`;
+          }
+        } else {
+          responseText = "No rows returned.";
+        }
       } else {
         responseText = "I received an unexpected result format. Please try rephrasing your question.";
       }
@@ -655,7 +711,29 @@ export function AppContent() {
                   <>
                     {/* Chat Messages */}
                     {messages.map((message) => (
-                      <ChatMessage key={message.id} message={message} />
+                      <div key={message.id}>
+                        <ChatMessage message={message} />
+                        {message.requiresMapping && message.missingConcepts && (
+                          <div className="px-4 py-2">
+                            <MappingSelector
+                              missingConcepts={message.missingConcepts}
+                              availableColumns={message.availableColumns || []}
+                              onSave={async (mappings) => {
+                                if (!dataset) return;
+                                // Save mappings
+                                await api.saveMappings(dataset.id, mappings);
+                                // Re-ask the original question
+                                const lastUserMessage = messages
+                                  .filter((m) => m.role === "user")
+                                  .pop();
+                                if (lastUserMessage) {
+                                  await handleSendMessage(lastUserMessage.content);
+                                }
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     ))}
 
                     {/* Typing Indicator */}

@@ -1,0 +1,10 @@
+{
+  "mappings": {
+    "quantity": "show_id",
+    "year": "release_year",
+    "rating": "rating",
+    "country": "country",
+    "genre": "type",
+    "duration": "duration"
+  }
+}

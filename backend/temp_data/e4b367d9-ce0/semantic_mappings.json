@@ -1,0 +1,6 @@
+{
+  "mappings": {
+    "country": "country",
+    "genre": "listed_in"
+  }
+}

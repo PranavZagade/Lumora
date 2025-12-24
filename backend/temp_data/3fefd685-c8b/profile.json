@@ -1,0 +1,177 @@
+{
+  "dataset": {
+    "id": "3fefd685-c8b",
+    "name": "netflix_titles.csv",
+    "rows": 8807,
+    "columns": 12,
+    "size_bytes": 8937920,
+    "uploaded_at": "2025-12-24T02:21:10.083336"
+  },
+  "columns": [
+    {
+      "name": "show_id",
+      "dtype": "text",
+      "null_count": 0,
+      "null_percentage": 0.0,
+      "unique_count": 8807,
+      "sample_values": [
+        "s1",
+        "s2",
+        "s3",
+        "s4",
+        "s5"
+      ]
+    },
+    {
+      "name": "type",
+      "dtype": "categorical",
+      "null_count": 0,
+      "null_percentage": 0.0,
+      "unique_count": 2,
+      "sample_values": [
+        "Movie",
+        "TV Show"
+      ]
+    },
+    {
+      "name": "title",
+      "dtype": "text",
+      "null_count": 0,
+      "null_percentage": 0.0,
+      "unique_count": 8807,
+      "sample_values": [
+        "Dick Johnson Is Dead",
+        "Blood & Water",
+        "Ganglands",
+        "Jailbirds New Orleans",
+        "Kota Factory"
+      ]
+    },
+    {
+      "name": "director",
+      "dtype": "text",
+      "null_count": 2634,
+      "null_percentage": 29.91,
+      "unique_count": 4528,
+      "sample_values": [
+        "Kirsten Johnson",
+        "Julien Leclercq",
+        "Mike Flanagan",
+        "Robert Cullen, Jos\u00e9 Luis Ucha",
+        "Haile Gerima"
+      ]
+    },
+    {
+      "name": "cast",
+      "dtype": "text",
+      "null_count": 825,
+      "null_percentage": 9.37,
+      "unique_count": 7692,
+      "sample_values": [
+        "Ama Qamata, Khosi Ngema, Gail Mabalane, Thabang Molaba, Dillon Windvogel, Natasha Thahane, Arno Greeff, Xolile Tshabalala, Getmore Sithole, Cindy Mahlangu, Ryle De Morny, Greteli Fincham, Sello Maake Ka-Ncube, Odwa Gwanya, Mekaila Mathys, Sandi Schultz, Duane Williams, Shamilla Miller, Patrick Mofokeng",
+        "Sami Bouajila, Tracy Gotoas, Samuel Jouy, Nabiha Akkari, Sofia Lesaffre, Salim Kechiouche, Noureddine Farihi, Geert Van Rampelberg, Bakary Diombera",
+        "Mayur More, Jitendra Kumar, Ranjan Raj, Alam Khan, Ahsaas Channa, Revathi Pillai, Urvi Singh, Arun Kumar",
+        "Kate Siegel, Zach Gilford, Hamish Linklater, Henry Thomas, Kristin Lehman, Samantha Sloyan, Igby Rigney, Rahul Kohli, Annarah Cymone, Annabeth Gish, Alex Essoe, Rahul Abburi, Matt Biedel, Michael Trucco, Crystal Balint, Louis Oliver",
+        "Vanessa Hudgens, Kimiko Glenn, James Marsden, Sofia Carson, Liza Koshy, Ken Jeong, Elizabeth Perkins, Jane Krakowski, Michael McKean, Phil LaMarr"
+      ]
+    },
+    {
+      "name": "country",
+      "dtype": "text",
+      "null_count": 831,
+      "null_percentage": 9.44,
+      "unique_count": 748,
+      "sample_values": [
+        "United States",
+        "South Africa",
+        "India",
+        "United States, Ghana, Burkina Faso, United Kingdom, Germany, Ethiopia",
+        "United Kingdom"
+      ]
+    },
+    {
+      "name": "date_added",
+      "dtype": "datetime",
+      "null_count": 10,
+      "null_percentage": 0.11,
+      "unique_count": 1767,
+      "sample_values": [
+        "September 25, 2021",
+        "September 24, 2021",
+        "September 23, 2021",
+        "September 22, 2021",
+        "September 21, 2021"
+      ]
+    },
+    {
+      "name": "release_year",
+      "dtype": "numeric",
+      "null_count": 0,
+      "null_percentage": 0.0,
+      "unique_count": 74,
+      "sample_values": [
+        "2020",
+        "2021",
+        "1993",
+        "2018",
+        "1996"
+      ]
+    },
+    {
+      "name": "rating",
+      "dtype": "categorical",
+      "null_count": 4,
+      "null_percentage": 0.05,
+      "unique_count": 17,
+      "sample_values": [
+        "PG-13",
+        "TV-MA",
+        "PG",
+        "TV-14",
+        "TV-PG"
+      ]
+    },
+    {
+      "name": "duration",
+      "dtype": "text",
+      "null_count": 3,
+      "null_percentage": 0.03,
+      "unique_count": 220,
+      "sample_values": [
+        "90 min",
+        "2 Seasons",
+        "1 Season",
+        "91 min",
+        "125 min"
+      ]
+    },
+    {
+      "name": "listed_in",
+      "dtype": "text",
+      "null_count": 0,
+      "null_percentage": 0.0,
+      "unique_count": 514,
+      "sample_values": [
+        "Documentaries",
+        "International TV Shows, TV Dramas, TV Mysteries",
+        "Crime TV Shows, International TV Shows, TV Action & Adventure",
+        "Docuseries, Reality TV",
+        "International TV Shows, Romantic TV Shows, TV Comedies"
+      ]
+    },
+    {
+      "name": "description",
+      "dtype": "text",
+      "null_count": 0,
+      "null_percentage": 0.0,
+      "unique_count": 8775,
+      "sample_values": [
+        "As her father nears the end of his life, filmmaker Kirsten Johnson stages his death in inventive and comical ways to help them both face the inevitable.",
+        "After crossing paths at a party, a Cape Town teen sets out to prove whether a private-school swimming star is her sister who was abducted at birth.",
+        "To protect his family from a powerful drug lord, skilled thief Mehdi and his expert team of robbers are pulled into a violent and deadly turf war.",
+        "Feuds, flirtations and toilet talk go down among the incarcerated women at the Orleans Justice Center in New Orleans on this gritty reality series.",
+        "In a city of coaching centers known to train India\u2019s finest collegiate minds, an earnest but unexceptional student and his friends navigate campus life."
+      ]
+    }
+  ]
+}
