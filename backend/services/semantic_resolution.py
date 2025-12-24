@@ -30,17 +30,19 @@ STRUCTURAL_CONCEPTS = {
 }
 
 # Semantic concepts - require business meaning mapping
+# Keywords are matched with word boundaries, so compound phrases work too
+# e.g., "gross revenue" will match "revenue", "movie title" will match "title"
 SEMANTIC_CONCEPTS = {
-    "rating": ["rating", "rate", "score", "stars", "review score"],
-    "country": ["country", "nation", "countries"],
-    "genre": ["genre", "category", "type", "kind", "style"],
-    "revenue": ["revenue", "income", "earnings", "sales", "money"],
-    "region": ["region", "area", "location", "place"],
-    "title": ["title", "name", "movie", "film", "show"],
-    "price": ["price", "cost"],
+    "rating": ["rating", "rate", "score", "stars", "review score", "rated"],
+    "country": ["country", "nation", "countries", "nationality"],
+    "genre": ["genre", "category", "type", "kind", "style", "categories"],
+    "revenue": ["revenue", "income", "earnings", "sales", "money", "gross", "profit", "box office", "gross revenue", "total revenue", "net revenue"],
+    "region": ["region", "area", "location", "place", "territory"],
+    "title": ["title", "name", "movie", "film", "show", "movies", "films", "shows"],
+    "price": ["price", "cost", "pricing", "costs"],
     "status": ["status", "state", "condition"],
-    "customer": ["customer", "user", "client"],
-    "product": ["product", "item", "goods"],
+    "customer": ["customer", "user", "client", "buyer", "purchaser"],
+    "product": ["product", "item", "goods", "merchandise"],
 }
 
 # Subjective/policy keywords - questions that require human judgment
@@ -134,18 +136,31 @@ def detect_semantic_concepts(question: str) -> Set[str]:
     
     Returns a set of semantic concept names (e.g., {"rating", "country"}).
     Structural concepts like "year", "quantity", "duration" are excluded.
+    
+    Handles compound phrases like "gross revenue" by matching longer phrases first.
     """
     question_lower = question.lower()
     detected = set()
     
     # Only check semantic concepts, not structural ones
     for concept, keywords in SEMANTIC_CONCEPTS.items():
-        for keyword in keywords:
-            # Use word boundaries to avoid partial matches
-            pattern = r"\b" + re.escape(keyword) + r"\b"
-            if re.search(pattern, question_lower):
+        # Sort keywords by length (descending) to match longer phrases first
+        # e.g., "gross revenue" should match before just "revenue"
+        sorted_keywords = sorted(keywords, key=len, reverse=True)
+        
+        for keyword in sorted_keywords:
+            # For multi-word keywords, match as phrase (case-insensitive)
+            # For single words, use word boundaries
+            if " " in keyword:
+                # Multi-word phrase: match as phrase
+                pattern = re.escape(keyword)
+            else:
+                # Single word: use word boundaries
+                pattern = r"\b" + re.escape(keyword) + r"\b"
+            
+            if re.search(pattern, question_lower, re.IGNORECASE):
                 detected.add(concept)
-                break
+                break  # Found one keyword for this concept, move to next concept
     
     logger.info(f"Detected semantic concepts in question: {detected}")
     return detected
@@ -161,30 +176,55 @@ def is_concept_required(question: str, concept: str) -> bool:
     - Question asks "by [concept]" (grouping)
     - Question filters "where [concept]" (filtering)
     - Question aggregates "[concept]" (aggregation target)
+    
+    Handles compound phrases like "gross revenue" by checking all keywords.
     """
     question_lower = question.lower()
     
     concept_keywords = SEMANTIC_CONCEPTS.get(concept, [])
-    for keyword in concept_keywords:
-        pattern = r"\b" + re.escape(keyword) + r"\b"
-        if re.search(pattern, question_lower):
+    # Sort by length (longest first) to match compound phrases first
+    sorted_keywords = sorted(concept_keywords, key=len, reverse=True)
+    
+    for keyword in sorted_keywords:
+        # For multi-word keywords, match as phrase; for single words, use word boundaries
+        if " " in keyword:
+            keyword_pattern = re.escape(keyword)
+        else:
+            keyword_pattern = r"\b" + re.escape(keyword) + r"\b"
+        
+        if re.search(keyword_pattern, question_lower, re.IGNORECASE):
             # Pattern: "which [keyword]" - grouping/ranking
-            if re.search(rf"\bwhich\s+{re.escape(keyword)}", question_lower):
+            if re.search(rf"\bwhich\s+{re.escape(keyword)}", question_lower, re.IGNORECASE):
                 return True
             # Pattern: "by [keyword]" - grouping
-            if re.search(rf"\bby\s+{re.escape(keyword)}", question_lower):
+            if re.search(rf"\bby\s+{re.escape(keyword)}", question_lower, re.IGNORECASE):
                 return True
             # Pattern: "[keyword] of" or "[keyword] for" - aggregation target
-            if re.search(rf"\b{re.escape(keyword)}\s+(of|for|in)", question_lower):
+            if re.search(rf"{re.escape(keyword)}\s+(of|for|in)", question_lower, re.IGNORECASE):
                 return True
             # Pattern: "where [keyword]" or "with [keyword]" - filtering
-            if re.search(rf"\b(where|with|having)\s+{re.escape(keyword)}", question_lower):
+            if re.search(rf"\b(where|with|having)\s+{re.escape(keyword)}", question_lower, re.IGNORECASE):
                 return True
             # Pattern: "[keyword] is" or "[keyword] has" - filtering/condition
-            if re.search(rf"\b{re.escape(keyword)}\s+(is|has|equals|contains)", question_lower):
+            if re.search(rf"{re.escape(keyword)}\s+(is|has|equals|contains)", question_lower, re.IGNORECASE):
                 return True
             # Pattern: "average [keyword]", "sum of [keyword]", "total [keyword]", etc. - aggregation
-            if re.search(rf"\b(avg|average|sum|total|mean|min|max|median)\s+(of\s+)?{re.escape(keyword)}", question_lower):
+            # This handles "average gross revenue" by matching "average" followed by any phrase containing the keyword
+            # BUT: exclude cases where keyword appears after "of" with another concept (e.g., "revenue of movies" - movies is descriptive)
+            if re.search(rf"\b(avg|average|sum|total|mean|min|max|median)\s+(of\s+)?.*?{re.escape(keyword)}", question_lower, re.IGNORECASE):
+                # Check if this is a descriptive phrase (e.g., "revenue of movies" where "movies" is just context)
+                # If keyword appears after "of" and before another semantic concept, it might be descriptive
+                # For now, if keyword appears directly after aggregation word, it's required
+                if re.search(rf"\b(avg|average|sum|total|mean|min|max|median)\s+{re.escape(keyword)}", question_lower, re.IGNORECASE):
+                    return True
+                # If keyword appears after "of" but is the main aggregation target, it's required
+                if re.search(rf"\b(avg|average|sum|total|mean|min|max|median)\s+of\s+.*?{re.escape(keyword)}\b", question_lower, re.IGNORECASE):
+                    return True
+            # Pattern: "what is the [aggregation] [keyword]" - common question format
+            if re.search(rf"\bwhat\s+is\s+the\s+(avg|average|sum|total|mean|min|max|median)\s+{re.escape(keyword)}", question_lower, re.IGNORECASE):
+                return True
+            # Pattern: "what is the [aggregation] of [keyword]" - handles "average of revenue"
+            if re.search(rf"\bwhat\s+is\s+the\s+(avg|average|sum|total|mean|min|max|median)\s+of\s+.*?{re.escape(keyword)}\b", question_lower, re.IGNORECASE):
                 return True
             # Pattern: "what is the [aggregation] [keyword]" - aggregation
             if re.search(rf"\bwhat\s+is\s+the\s+(avg|average|sum|total|mean|min|max)\s+{re.escape(keyword)}", question_lower):

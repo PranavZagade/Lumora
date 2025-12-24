@@ -81,6 +81,11 @@ interface SessionState {
   messages: ChatMessage[];
   isTyping: boolean;
   
+  // Mapping state (explicit state for column selector UI)
+  mappingActive: boolean;
+  mappingConcept: string | null;
+  mappingAvailableColumns: string[];
+  
   // UI state
   sidebarOpen: boolean;
   status: SessionStatus;
@@ -108,6 +113,10 @@ interface SessionState {
   setIsTyping: (typing: boolean) => void;
   clearMessages: () => void;
   
+  // Mapping actions
+  setMappingState: (active: boolean, concept?: string | null, columns?: string[]) => void;
+  clearMappingState: () => void;
+  
   // Reset
   reset: () => void;
 }
@@ -125,6 +134,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   suggestedQuestions: [],
   messages: [],
   isTyping: false,
+  mappingActive: false,
+  mappingConcept: null,
+  mappingAvailableColumns: [],
   sidebarOpen: true,
   status: "idle",
   error: null,
@@ -198,6 +210,21 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   setIsTyping: (isTyping) => set({ isTyping }),
   clearMessages: () => set({ messages: [] }),
   
+  // Mapping actions
+  setMappingState: (active, concept = null, columns = []) =>
+    set({
+      mappingActive: active,
+      mappingConcept: concept || null,
+      mappingAvailableColumns: columns || [],
+    }),
+  
+  clearMappingState: () =>
+    set({
+      mappingActive: false,
+      mappingConcept: null,
+      mappingAvailableColumns: [],
+    }),
+  
   // Reset
   reset: () =>
     set({
@@ -209,6 +236,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       suggestedQuestions: [],
       messages: [],
       isTyping: false,
+      mappingActive: false,
+      mappingConcept: null,
+      mappingAvailableColumns: [],
       status: "idle",
       error: null,
     }),

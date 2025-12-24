@@ -142,15 +142,36 @@ SQL: SELECT category_column, COUNT(*) as count FROM data GROUP BY category_colum
 Question: "What is the average price?"
 SQL: SELECT AVG(price_column) as average_price FROM data;
 
-Remember: Output ONLY SQL or clarification JSON. No explanations, no markdown, no code blocks. If mappings are provided, you MUST use them."""
+Question: "What is the average gross revenue of movies?" (with mappings: revenue -> gross_revenue, title -> movie_title)
+SQL: SELECT AVG(gross_revenue) as average_revenue FROM data;
+
+Question: "What is the average revenue?" (with mapping: revenue -> total_sales)
+SQL: SELECT AVG(total_sales) as average_revenue FROM data;
+
+Remember: 
+- Output ONLY SQL or clarification JSON. No explanations, no markdown, no code blocks.
+- If mappings are provided, you MUST use the mapped column names exactly as specified.
+- Do NOT guess column names or use similar-sounding columns."""
 
     # Build semantic mappings context if available
     mappings_context = ""
     if request.semantic_mappings:
         mappings_list = [f"'{concept}' is represented by column '{column}'" 
                         for concept, column in request.semantic_mappings.items()]
-        mappings_context = f"\nSemantic mappings (MUST USE THESE):\n" + "\n".join(f"- {m}" for m in mappings_list) + "\n"
-        mappings_context += "\nCRITICAL: When the question mentions a mapped concept, you MUST use the mapped column. Do NOT use any other column.\n"
+        mappings_context = f"\n\n=== SEMANTIC MAPPINGS (MANDATORY) ===\n"
+        mappings_context += "\n".join(f"- {m}" for m in mappings_list) + "\n"
+        mappings_context += "\nCRITICAL RULES:\n"
+        mappings_context += "1. When the question mentions ANY mapped concept (e.g., 'revenue', 'gross revenue', 'movies'), you MUST use the mapped column.\n"
+        mappings_context += "2. Do NOT use any other column, even if it seems similar.\n"
+        mappings_context += "3. If the question asks for 'average revenue' or 'average gross revenue', use AVG() on the mapped revenue column.\n"
+        mappings_context += "4. If the question mentions 'movies' or 'films' descriptively (e.g., 'revenue of movies'), you can ignore it unless you need to filter. Focus on the aggregation target.\n"
+        mappings_context += "5. For aggregation questions like 'What is the average X?', generate: SELECT AVG(mapped_column) FROM data;\n"
+        mappings_context += "6. These mappings are user-provided and must be respected.\n"
+        mappings_context += "\nEXAMPLE:\n"
+        mappings_context += "Question: 'What is the average gross revenue of movies?'\n"
+        mappings_context += "Mapping: revenue -> gross_revenue\n"
+        mappings_context += "SQL: SELECT AVG(gross_revenue) as average_revenue FROM data;\n"
+        mappings_context += "===============================\n"
     
     user_prompt = f"""Question: {request.question}
 
@@ -160,8 +181,14 @@ Dataset schema:
 - Columns:
 {json.dumps(column_schema, indent=2)}
 {mappings_context}
-Generate a SQL query to answer this question. Use ONLY the columns listed above.
-{mappings_context and "When semantic concepts are mentioned, you MUST use the mapped columns from the semantic mappings above. Do NOT substitute or guess." or ""}
+Generate a SQL query to answer this question.
+
+INSTRUCTIONS:
+1. Use ONLY the columns listed in the schema above.
+2. {mappings_context and "You MUST use the mapped columns from the semantic mappings section above. For example, if the question mentions 'revenue' or 'gross revenue', use the mapped revenue column. If it mentions 'movies', use the mapped title column." or "If the question mentions concepts like 'revenue', 'movies', 'genre', etc., you may need to ask for clarification if no mapping exists."}
+3. Generate valid SQL that answers the question directly.
+4. If you cannot generate correct SQL, return: {{"type": "clarification", "message": "..."}}
+
 Output ONLY the SQL query (or clarification JSON if needed)."""
 
     try:

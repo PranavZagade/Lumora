@@ -90,21 +90,51 @@ async def execute_question(dataset_id: str, request: Dict[str, Any]) -> Dict[str
         if col.get("name")
     }
     
-    # Step 1: Semantic resolution - check if question needs concept mappings
+    # EARLY GUARD: Check for unmapped conceptual columns before any other processing
+    # This catches cases where concepts are referenced but not yet mapped
+    # Only checks for concepts that are likely required (not just mentioned)
+    from services.semantic_resolution import detect_semantic_concepts, is_concept_required
     existing_mappings = get_mappings(dataset_id)
+    detected_concepts = detect_semantic_concepts(question)
+    
+    # Filter to only required concepts (concepts that are actually needed to answer)
+    required_unmapped_concepts = {
+        concept for concept in detected_concepts
+        if concept not in existing_mappings and is_concept_required(question, concept)
+    }
+    
+    if required_unmapped_concepts:
+        # Trigger column-mapping UI immediately and stop processing
+        first_unmapped = sorted(required_unmapped_concepts)[0]  # Get first unmapped concept
+        return {
+            "dataset_id": dataset_id,
+            "result": {
+                "type": "column_mapping_required",
+                "concept": first_unmapped,  # Single concept for now (one at a time)
+                "message": f"To answer this question, I need to know which column represents '{first_unmapped}'. Please select the column from your dataset.",
+                "available_columns": column_names,
+            },
+            "metadata": {
+                "semantic_resolution": "needs_mapping",
+                "early_guard": True,  # Flag that this was caught by early guard
+            },
+        }
+    
+    # Step 1: Semantic resolution - check if question needs concept mappings
+    # (This continues with existing logic for cases that pass the early guard)
     semantic_result = resolve_semantics(question, existing_mappings, column_info)
     
     if semantic_result.needs_clarification:
         # Check if it's a subjective question (no missing concepts) or mapping request
         if semantic_result.missing_concepts:
-            # Need user to provide column mappings
+            # Need user to provide column mappings - return structured type
+            first_missing = sorted(semantic_result.missing_concepts)[0]  # Ask for one at a time
             return {
                 "dataset_id": dataset_id,
                 "result": {
-                    "type": "clarification",
-                    "message": semantic_result.message,
-                    "requires_mapping": True,
-                    "missing_concepts": list(semantic_result.missing_concepts),
+                    "type": "column_mapping_required",
+                    "concept": first_missing,  # Single concept (one at a time)
+                    "message": semantic_result.message or f"To answer this question, I need to know which column represents '{first_missing}'. Please select the column from your dataset.",
                     "available_columns": column_names,
                 },
                 "metadata": {
@@ -126,12 +156,20 @@ async def execute_question(dataset_id: str, request: Dict[str, Any]) -> Dict[str
     
     # Step 2: Generate SQL query from question (with semantic mappings)
     try:
+        # Get existing mappings from storage (in case they were just saved)
+        existing_mappings = get_mappings(dataset_id)
+        
+        # Merge with semantic resolution mappings (semantic_result.mapped_concepts)
+        all_mappings = {**existing_mappings, **semantic_result.mapped_concepts}
+        
+        logger.info(f"Using semantic mappings: {all_mappings}")
+        
         query_request = QueryGenerationRequest(
             question=question,
             columns=columns,
             total_rows=total_rows,
             table_name="data",
-            semantic_mappings=semantic_result.mapped_concepts
+            semantic_mappings=all_mappings  # Use all mappings (existing + newly resolved)
         )
         
         query_response = generate_query(query_request)
@@ -155,14 +193,28 @@ async def execute_question(dataset_id: str, request: Dict[str, Any]) -> Dict[str
         query = query_response.query
         
     except ValueError as e:
-        logger.error(f"Query generation failed: {e}")
+        error_msg = str(e)
+        logger.error(f"Query generation failed: {error_msg}")
+        
+        # Check if it's a rate limit or API error
+        if "rate limit" in error_msg.lower() or "429" in error_msg:
+            return {
+                "dataset_id": dataset_id,
+                "result": {
+                    "type": "clarification",
+                    "message": "The query service is temporarily unavailable due to rate limits. Please try again in a few minutes.",
+                },
+                "metadata": {"error": error_msg},
+            }
+        
+        # For other errors, provide a more helpful message
         return {
             "dataset_id": dataset_id,
             "result": {
                 "type": "clarification",
                 "message": "I couldn't understand your question. Could you rephrase it or be more specific?",
             },
-            "metadata": {"error": str(e)},
+            "metadata": {"error": error_msg},
         }
     except Exception as e:
         logger.error(f"Unexpected error in query generation: {e}")
