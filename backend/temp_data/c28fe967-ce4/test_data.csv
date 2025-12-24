@@ -1,0 +1,9 @@
+order_id,customer_id,product_name,quantity,unit_price,total_amount,order_date,region
+1001,C123,Widget A,5,19.99,99.95,2024-01-15,West
+1002,C456,Widget B,3,29.99,89.97,2024-01-16,East
+1003,C123,Widget C,2,39.99,79.98,2024-01-17,West
+1004,C789,Widget A,10,19.99,199.90,2024-01-18,North
+1005,,Widget B,1,29.99,29.99,2024-01-19,South
+1006,C456,Widget D,7,49.99,349.93,2024-01-20,East
+1007,C321,Widget A,4,19.99,79.96,2024-01-21,
+1008,C654,Widget C,6,39.99,239.94,2024-01-22,West

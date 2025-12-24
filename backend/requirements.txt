@@ -1,0 +1,25 @@
+# FastAPI & Server
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+python-multipart==0.0.9
+
+# Data Processing
+pandas==2.2.0
+duckdb==0.10.0
+openpyxl==3.1.2
+
+# Cloudflare R2 (S3-compatible)
+boto3==1.34.34
+
+# Validation
+pydantic==2.6.1
+pydantic-settings==2.1.0
+
+# AI Narration (for later)
+groq>=1.0.0
+
+# Utilities
+python-dotenv==1.0.1
+uuid7==0.1.0
+
+

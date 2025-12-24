@@ -1,0 +1,35 @@
+{
+  "dataset_id": "3e69e224-786",
+  "total_rows": 149116,
+  "total_columns": 11,
+  "issues": [
+    {
+      "column": "unit_price",
+      "issue_type": "missing",
+      "severity": "medium",
+      "count": 14911,
+      "percentage": 10.0,
+      "description": "14,911 rows (10.0%) have missing values",
+      "explanation": "This may affect aggregated calculations such as totals and averages.",
+      "role": "metric"
+    },
+    {
+      "column": "product_category",
+      "issue_type": "missing",
+      "severity": "low",
+      "count": 7455,
+      "percentage": 5.0,
+      "description": "7,455 rows (5.0%) have missing values",
+      "explanation": "This may reduce grouping and comparison accuracy.",
+      "role": "dimension"
+    }
+  ],
+  "overall_health": "fair",
+  "summary": "Found 2 data quality issues.",
+  "checks_performed": [
+    "Missing values",
+    "Duplicate rows",
+    "Invalid numeric values",
+    "Invalid or future dates"
+  ]
+}

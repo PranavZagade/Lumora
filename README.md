@@ -1,20 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lumora
+
+A story-first, AI-powered data understanding product for non-technical users.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ and npm
+- Python 3.9+
+- Groq API key (for chat functionality)
+
+### Backend Setup
+
+1. Navigate to the backend directory:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd backend
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Create a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+4. Set up environment variables:
+```bash
+# Create a .env file in the backend directory
+echo "GROQ_API_KEY=your_groq_api_key_here" > .env
+```
+
+   **Important:** Replace `your_groq_api_key_here` with your actual Groq API key from [https://console.groq.com/](https://console.groq.com/)
+
+5. Start the backend server:
+```bash
+uvicorn main:app --reload --port 8000
+```
+
+### Frontend Setup
+
+1. Navigate to the project root:
+```bash
+cd ..
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start the development server:
+```bash
+npm run dev
+```
+
+4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+### Environment Variables
+
+**Backend (`backend/.env`):**
+- `GROQ_API_KEY` - Required for chat intent generation. Get your key from [Groq Console](https://console.groq.com/)
+
+**Security Note:** Never commit `.env` files to version control. They are already included in `.gitignore`.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

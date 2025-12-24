@@ -1,0 +1,40 @@
+{
+  "dataset": {
+    "id": "2f5b8163-f15",
+    "name": "Coffee Shop Sales.xlsx",
+    "rows": 75,
+    "columns": 2,
+    "size_bytes": "6976",
+    "uploaded_at": "2025-12-23T04:43:52.474509"
+  },
+  "columns": [
+    {
+      "name": "Unnamed: 0",
+      "dtype": "text",
+      "null_count": 13,
+      "null_percentage": 17.33,
+      "unique_count": 54,
+      "sample_values": [
+        "Row Labels",
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr"
+      ]
+    },
+    {
+      "name": "Unnamed: 1",
+      "dtype": "datetime",
+      "null_count": 13,
+      "null_percentage": 17.33,
+      "unique_count": 57,
+      "sample_values": [
+        "Sum of Revenue",
+        "81677.73999999928",
+        "76145.18999999958",
+        "98834.68000000001",
+        "118941.08000000106"
+      ]
+    }
+  ]
+}
