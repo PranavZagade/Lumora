@@ -52,9 +52,6 @@ export interface ChatMessage {
   content: string;
   timestamp: Date;
   insights?: Insight[];
-  requiresMapping?: boolean;
-  missingConcepts?: string[];
-  availableColumns?: string[];
 }
 
 export interface Session {
