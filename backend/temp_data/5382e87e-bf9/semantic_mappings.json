@@ -1,7 +1,0 @@
-{
-  "mappings": {
-    "genre": "genre",
-    "title": "title",
-    "revenue": "gross(M)"
-  }
-}

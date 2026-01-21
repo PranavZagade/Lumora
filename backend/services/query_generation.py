@@ -14,18 +14,20 @@ import re
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from dotenv import load_dotenv
-from groq import Groq
 import logging
 
 # Load environment variables
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(env_path)
 
-# Initialize Groq client
+from groq import Groq
+from services.groq_client import call_with_fallback
+
+# Initialize Groq client (single-model behavior preserved; model routing is centralized)
 _groq_api_key = os.getenv("GROQ_API_KEY")
 if _groq_api_key:
     try:
-        client = Groq(api_key=_groq_api_key)
+        client: Optional[Groq] = Groq(api_key=_groq_api_key)
     except Exception as e:
         logging.warning(f"Failed to initialize Groq client: {e}")
         client = None
@@ -192,8 +194,8 @@ INSTRUCTIONS:
 Output ONLY the SQL query (or clarification JSON if needed)."""
 
     try:
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+        response = call_with_fallback(
+            client,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},

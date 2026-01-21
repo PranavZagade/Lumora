@@ -1,0 +1,14 @@
+{
+  "dataset_id": "baa6c85d-73e",
+  "total_rows": 1000000,
+  "total_columns": 6,
+  "issues": [],
+  "overall_health": "good",
+  "summary": "We checked for missing values, duplicate rows, and invalid formats \u2014 none were found.",
+  "checks_performed": [
+    "Missing values",
+    "Duplicate rows",
+    "Invalid numeric values",
+    "Invalid or future dates"
+  ]
+}

@@ -66,54 +66,54 @@ interface SessionState {
   // Current session
   currentSession: Session | null;
   sessions: Session[];
-  
+
   // Dataset state
   dataset: DatasetInfo | null;
   columnProfiles: ColumnInfo[];
   healthCheck: HealthCheckResult | null;
   insights: Insight[];
   suggestedQuestions: SuggestedQuestion[];
-  
+
   // Chat state
   messages: ChatMessage[];
   isTyping: boolean;
-  
+
   // Mapping state (explicit state for column selector UI)
   mappingActive: boolean;
   mappingConcept: string | null;
   mappingAvailableColumns: string[];
-  
+
   // UI state
   sidebarOpen: boolean;
   status: SessionStatus;
   error: string | null;
-  
+
   // Actions
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
   setStatus: (status: SessionStatus) => void;
   setError: (error: string | null) => void;
-  
+
   // Session actions
   createSession: (name?: string) => Session;
   selectSession: (sessionId: string) => void;
-  
+
   // Dataset actions
   setDataset: (dataset: DatasetInfo) => void;
   setColumnProfiles: (columns: ColumnInfo[]) => void;
   setHealthCheck: (result: HealthCheckResult | null) => void;
   setInsights: (insights: Insight[]) => void;
   setSuggestedQuestions: (questions: SuggestedQuestion[]) => void;
-  
+
   // Chat actions
   addMessage: (message: Omit<ChatMessage, "id" | "timestamp">) => void;
   setIsTyping: (typing: boolean) => void;
   clearMessages: () => void;
-  
+
   // Mapping actions
   setMappingState: (active: boolean, concept?: string | null, columns?: string[]) => void;
   clearMappingState: () => void;
-  
+
   // Reset
   reset: () => void;
 }
@@ -137,13 +137,13 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   sidebarOpen: true,
   status: "idle",
   error: null,
-  
+
   // UI actions
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setStatus: (status) => set({ status, error: status === "error" ? get().error : null }),
   setError: (error) => set({ error, status: error ? "error" : get().status }),
-  
+
   // Session actions
   createSession: (name) => {
     const session: Session = {
@@ -165,7 +165,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     }));
     return session;
   },
-  
+
   selectSession: (sessionId) => {
     const session = get().sessions.find((s) => s.id === sessionId);
     if (session) {
@@ -176,7 +176,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       });
     }
   },
-  
+
   // Dataset actions
   setDataset: (dataset) =>
     set((state) => ({
@@ -185,12 +185,12 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         ? { ...state.currentSession, dataset, status: "ready" }
         : null,
     })),
-  
+
   setColumnProfiles: (columnProfiles) => set({ columnProfiles }),
   setHealthCheck: (healthCheck) => set({ healthCheck }),
   setInsights: (insights) => set({ insights }),
   setSuggestedQuestions: (suggestedQuestions) => set({ suggestedQuestions }),
-  
+
   // Chat actions
   addMessage: (message) =>
     set((state) => ({
@@ -203,10 +203,10 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         },
       ],
     })),
-  
+
   setIsTyping: (isTyping) => set({ isTyping }),
   clearMessages: () => set({ messages: [] }),
-  
+
   // Mapping actions
   setMappingState: (active, concept = null, columns = []) =>
     set({
@@ -214,14 +214,14 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       mappingConcept: concept || null,
       mappingAvailableColumns: columns || [],
     }),
-  
+
   clearMappingState: () =>
     set({
       mappingActive: false,
       mappingConcept: null,
       mappingAvailableColumns: [],
     }),
-  
+
   // Reset
   reset: () =>
     set({

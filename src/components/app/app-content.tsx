@@ -100,7 +100,7 @@ export function AppContent() {
   const progressAnimRef = useRef<number | null>(null);
   const rowAnimRef = useRef<number | null>(null);
   const progressValueRef = useRef(0);
-  
+
   const {
     dataset,
     columnProfiles,
@@ -214,10 +214,10 @@ export function AppContent() {
     try {
       // Upload to backend API
       const response = await api.uploadDataset(file);
-      
+
       setStatus("processing");
       animateProgress(30);
-      
+
       // Get the full profile
       setProgressLabel("Reading rows…");
       animateProgress(40);
@@ -227,7 +227,7 @@ export function AppContent() {
         animateRows(profile.dataset.rows);
         setProgressLabel("Reading rows…");
       }
-      
+
       // Map API response to store format
       const datasetInfo: DatasetInfo = {
         id: profile.dataset.id,
@@ -236,17 +236,17 @@ export function AppContent() {
         columns: profile.dataset.columns,
         uploadedAt: new Date(profile.dataset.uploaded_at),
       };
-      
+
       const columns: ColumnInfo[] = profile.columns.map((col) => ({
         name: col.name,
         type: col.dtype === "boolean" ? "boolean" : col.dtype,
         nullCount: col.null_count,
         uniqueCount: col.unique_count,
       }));
-      
+
       setDataset(datasetInfo);
       setColumnProfiles(columns);
-      
+
       // Stage 3 — Analyzing structure
       setProgressLabel("Analyzing columns and data types…");
       animateProgress(85);
@@ -261,7 +261,7 @@ export function AppContent() {
         setProgressLabel("Checking for missing values and duplicates…");
         animateProgress(95);
         const healthResult = await api.getDataHealthCheck(response.dataset_id);
-        
+
         // Map API response to store format
         const mappedHealthCheck: HealthCheckResult = {
           issues: healthResult.issues.map((issue): HealthIssue => ({
@@ -278,13 +278,13 @@ export function AppContent() {
           summary: healthResult.summary,
           checksPerformed: healthResult.checks_performed,
         };
-        
+
         setHealthCheck(mappedHealthCheck);
       } catch (healthError) {
         console.error("Health check failed:", healthError);
         // Don't fail the whole upload if health check fails
       }
-      
+
       // Fetch structural insights in the background
       try {
         setProgressLabel("Finalizing dataset…");
@@ -318,11 +318,11 @@ export function AppContent() {
       } catch (questionsError) {
         console.error("Suggested questions fetch failed:", questionsError);
       }
-      
+
       setProgressLabel("Finalizing dataset…");
       animateProgress(100);
       setStatus("ready");
-      
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to upload file";
       setError(errorMessage);
@@ -330,7 +330,7 @@ export function AppContent() {
       setProgress(0);
       progressValueRef.current = 0;
       setProgressLabel(null);
-      
+
       addMessage({
         role: "assistant",
         content: `Sorry, there was an error processing your file: ${errorMessage}`,
@@ -417,14 +417,14 @@ export function AppContent() {
     try {
       // Execute question via API
       const result = await api.executeQuestion(dataset.id, content);
-      
+
       // Debug: Log the full response structure
       console.log("API Response:", JSON.stringify(result, null, 2));
       console.log("Result type:", result.result?.type);
-      
+
       // Format result for display
       let responseText = "";
-      
+
       // CRITICAL: Check for column_mapping_required FIRST, before any other processing
       if (result.result?.type === "column_mapping_required") {
         // Handle column mapping request - set explicit mapping state
@@ -434,12 +434,12 @@ export function AppContent() {
           message?: string;
           available_columns?: string[];
         };
-        
+
         // Ensure available_columns is an array of strings
         const availableColumns: string[] = Array.isArray(mappingResult.available_columns)
           ? mappingResult.available_columns.filter((col): col is string => typeof col === 'string')
           : [];
-        
+
         // Set explicit mapping state (this triggers the UI)
         console.log("Setting mapping state:", {
           active: true,
@@ -447,13 +447,13 @@ export function AppContent() {
           columns: availableColumns,
         });
         setMappingState(true, mappingResult.concept, availableColumns);
-        
+
         // Add message for context (optional, for display)
         addMessage({
           role: "assistant",
           content: mappingResult.message || `To answer this question, I need to know which column represents '${mappingResult.concept}'. Please select the column from your dataset.`,
         });
-        
+
         setIsTyping(false);
         return;  // Stop processing until mapping is saved
       } else if (result.result?.type === "metadata") {
@@ -477,7 +477,7 @@ export function AppContent() {
           type: "clarification";
           message?: string;
         };
-        
+
         responseText = clarificationResult.message || "Please clarify what you want to analyze.";
       } else if (result.result.type === "scalar") {
         const agg = result.result.aggregation || "value";
@@ -495,7 +495,7 @@ export function AppContent() {
         };
         const tied = scalarResult.tied;
         const tiedCount = scalarResult.tied_count;
-        
+
         // Handle ties
         if (tied && tiedCount) {
           if (agg === "count") {
@@ -503,7 +503,7 @@ export function AppContent() {
           } else {
             responseText = `The ${agg} is **${value?.toLocaleString() || "0"}**`;
           }
-          
+
           // Handle time period ties
           if (scalarResult.time_periods) {
             const periods = scalarResult.time_periods;
@@ -513,7 +513,7 @@ export function AppContent() {
               responseText += ` in ${periods.length} time periods: ${periods.slice(0, 3).join(", ")}${periods.length > 3 ? `, and ${periods.length - 3} more` : ""}`;
             }
           }
-          
+
           // Handle dimension ties
           if (scalarResult.dimension_values) {
             const dims = scalarResult.dimension_values;
@@ -530,7 +530,7 @@ export function AppContent() {
           } else {
             responseText = `The ${agg} is **${value?.toLocaleString() || "0"}**`;
           }
-          
+
           if (scalarResult.time_period) {
             responseText += ` in ${scalarResult.time_period}`;
           }
@@ -561,13 +561,13 @@ export function AppContent() {
         const metricCol = result.result.metric_column;
         const groupCol = result.result.group_column || result.result.dimension_column;
         const agg = result.result.aggregation || "value";
-        
+
         if (agg === "count") {
           responseText = `Top ${data.length} ${groupCol ? `by ${groupCol}` : "results"}:\n\n`;
         } else {
           responseText = `Top ${data.length} ${groupCol ? `by ${groupCol}` : "results"}${metricCol ? ` (${agg} of ${metricCol})` : ""}:\n\n`;
         }
-        
+
         data.forEach((item) => {
           responseText += `${item.rank}. ${item.group}: ${item.value.toLocaleString()}\n`;
         });
@@ -581,7 +581,7 @@ export function AppContent() {
         };
         const data = tableResult.data;
         const columns = tableResult.columns || (data.length > 0 ? Object.keys(data[0]) : []);
-        
+
         responseText = `Here are the results:\n\n`;
         if (data.length > 0) {
           // Show first 10 rows
@@ -756,7 +756,7 @@ export function AppContent() {
                         <ChatMessage message={message} />
                       </div>
                     ))}
-                    
+
                     {/* Mapping Selector - Rendered based on explicit state, not message flags */}
                     {(() => {
                       console.log("Rendering check:", {
@@ -766,46 +766,46 @@ export function AppContent() {
                       });
                       return mappingActive && mappingConcept;
                     })() && (
-                      <div className="px-4 py-2">
-                        <MappingSelector
-                          missingConcepts={mappingConcept ? [mappingConcept] : []}
-                          availableColumns={mappingAvailableColumns}
-                          onSave={async (mappings) => {
-                            if (!dataset) return;
-                            try {
-                              // Save mappings
-                              const mappingEntries = Object.entries(mappings);
-                              for (const [concept, columnName] of mappingEntries) {
-                                await api.saveMapping(dataset.id, concept, columnName);
+                        <div className="px-4 py-2">
+                          <MappingSelector
+                            missingConcepts={mappingConcept ? [mappingConcept] : []}
+                            availableColumns={mappingAvailableColumns}
+                            onSave={async (mappings) => {
+                              if (!dataset) return;
+                              try {
+                                // Save mappings
+                                const mappingEntries = Object.entries(mappings);
+                                for (const [concept, columnName] of mappingEntries) {
+                                  await api.saveMapping(dataset.id, concept, columnName);
+                                }
+                                // Clear mapping state
+                                clearMappingState();
+                                // Re-ask the original question
+                                const lastUserMessage = messages
+                                  .filter((m) => m.role === "user")
+                                  .pop();
+                                if (lastUserMessage) {
+                                  await handleSendMessage(lastUserMessage.content);
+                                }
+                              } catch (error) {
+                                console.error("Failed to save mapping:", error);
+                                addMessage({
+                                  role: "assistant",
+                                  content: "Failed to save the column mapping. Please try again.",
+                                });
                               }
+                            }}
+                            onCancel={() => {
                               // Clear mapping state
                               clearMappingState();
-                              // Re-ask the original question
-                              const lastUserMessage = messages
-                                .filter((m) => m.role === "user")
-                                .pop();
-                              if (lastUserMessage) {
-                                await handleSendMessage(lastUserMessage.content);
-                              }
-                            } catch (error) {
-                              console.error("Failed to save mapping:", error);
                               addMessage({
                                 role: "assistant",
-                                content: "Failed to save the column mapping. Please try again.",
+                                content: "Mapping cancelled. How else can I help?",
                               });
-                            }
-                          }}
-                          onCancel={() => {
-                            // Clear mapping state
-                            clearMappingState();
-                            addMessage({
-                              role: "assistant",
-                              content: "Mapping cancelled. How else can I help?",
-                            });
-                          }}
-                        />
-                      </div>
-                    )}
+                            }}
+                          />
+                        </div>
+                      )}
 
                     {/* Typing Indicator */}
                     {isTyping && <TypingIndicator />}

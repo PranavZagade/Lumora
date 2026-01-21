@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from dotenv import load_dotenv
 from groq import Groq
+from services.groq_client import call_with_fallback
 
 # Load environment variables
 env_path = Path(__file__).parent.parent / ".env"
@@ -107,8 +108,8 @@ Computed Result:
 
 Format this result into a clear, human-readable response. Use ONLY the provided result. Do NOT compute or infer anything."""
 
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+        response = call_with_fallback(
+            client,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
