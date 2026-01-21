@@ -1,0 +1,138 @@
+{
+  "dataset": {
+    "id": "68a8e2d7-6fc",
+    "name": "imdb_clean copy.csv",
+    "rows": 2532,
+    "columns": 9,
+    "size_bytes": 646191,
+    "uploaded_at": "2026-01-21T06:36:43.430379"
+  },
+  "columns": [
+    {
+      "name": "Unnamed: 0",
+      "dtype": "numeric",
+      "null_count": 0,
+      "null_percentage": 0.0,
+      "unique_count": 1000,
+      "sample_values": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
+      ]
+    },
+    {
+      "name": "title",
+      "dtype": "text",
+      "null_count": 0,
+      "null_percentage": 0.0,
+      "unique_count": 994,
+      "sample_values": [
+        "The Shawshank Redemption",
+        "The Godfather",
+        "The Dark Knight",
+        "Schindler's List",
+        "12 Angry Men"
+      ]
+    },
+    {
+      "name": "director",
+      "dtype": "text",
+      "null_count": 0,
+      "null_percentage": 0.0,
+      "unique_count": 560,
+      "sample_values": [
+        "Frank Darabont",
+        "Francis Ford Coppola",
+        "Christopher Nolan",
+        "Steven Spielberg",
+        "Sidney Lumet"
+      ]
+    },
+    {
+      "name": "release_year",
+      "dtype": "numeric",
+      "null_count": 0,
+      "null_percentage": 0.0,
+      "unique_count": 102,
+      "sample_values": [
+        "1994",
+        "1972",
+        "2008",
+        "1993",
+        "1957"
+      ]
+    },
+    {
+      "name": "runtime",
+      "dtype": "numeric",
+      "null_count": 0,
+      "null_percentage": 0.0,
+      "unique_count": 142,
+      "sample_values": [
+        "142",
+        "175",
+        "152",
+        "195",
+        "96"
+      ]
+    },
+    {
+      "name": "genre",
+      "dtype": "categorical",
+      "null_count": 0,
+      "null_percentage": 0.0,
+      "unique_count": 21,
+      "sample_values": [
+        "Drama",
+        "Crime",
+        "Action",
+        "Biography",
+        "History"
+      ]
+    },
+    {
+      "name": "rating",
+      "dtype": "numeric",
+      "null_count": 0,
+      "null_percentage": 0.0,
+      "unique_count": 17,
+      "sample_values": [
+        "9.3",
+        "9.2",
+        "9.0",
+        "8.9",
+        "8.8"
+      ]
+    },
+    {
+      "name": "metascore",
+      "dtype": "numeric",
+      "null_count": 0,
+      "null_percentage": 0.0,
+      "unique_count": 61,
+      "sample_values": [
+        "82",
+        "100",
+        "84",
+        "95",
+        "97"
+      ]
+    },
+    {
+      "name": "gross(M)",
+      "dtype": "numeric",
+      "null_count": 0,
+      "null_percentage": 0.0,
+      "unique_count": 708,
+      "sample_values": [
+        "28.34",
+        "134.97",
+        "534.86",
+        "96.9",
+        "4.36"
+      ]
+    }
+  ]
+}
