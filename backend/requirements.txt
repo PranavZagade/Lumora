@@ -6,7 +6,7 @@ python-multipart==0.0.9
 
 # Data Processing
 pandas==2.2.0
-duckdb==0.10.0
+duckdb==0.9.2
 openpyxl==3.1.2
 
 # Cloudflare R2 (S3-compatible)
