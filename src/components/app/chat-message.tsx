@@ -4,6 +4,8 @@ import { User, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ChatMessage as ChatMessageType } from "@/stores/session";
 import { InsightCard } from "./insight-card";
+import { VisualizationCard } from "./visualization-card";
+import type { ChartSpec } from "./chart-renderer";
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -68,6 +70,13 @@ export function ChatMessage({ message }: ChatMessageProps) {
             {message.insights.map((insight, index) => (
               <InsightCard key={insight.id} insight={insight} index={index} />
             ))}
+          </div>
+        )}
+
+        {/* Visualization card - renders below text answer */}
+        {message.visualization && (
+          <div className="text-left">
+            <VisualizationCard spec={message.visualization as unknown as ChartSpec} />
           </div>
         )}
 

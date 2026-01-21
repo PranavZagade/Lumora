@@ -607,6 +607,7 @@ export function AppContent() {
       addMessage({
         role: "assistant",
         content: responseText,
+        visualization: result.visualization || null,  // Pass visualization from API
       });
     } catch (error) {
       setIsTyping(false);

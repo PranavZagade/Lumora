@@ -52,6 +52,7 @@ export interface ChatMessage {
   content: string;
   timestamp: Date;
   insights?: Insight[];
+  visualization?: Record<string, unknown> | null;  // Chart spec from backend
 }
 
 export interface Session {

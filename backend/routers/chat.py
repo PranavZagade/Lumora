@@ -28,6 +28,12 @@ from services.response_formatter import (
 )
 from services.ai_formatter import format_result_with_ai
 
+# Visualization services (additive - post-execution only)
+from services.result_metadata import build_result_metadata
+from services.visualization_eligibility import check_eligibility
+from services.chart_spec import generate_chart_spec
+from services.chart_validator import validate_chart_spec
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
@@ -281,19 +287,47 @@ async def execute_question(dataset_id: str, request: Dict[str, Any]) -> Dict[str
                 total_rows=total_rows
             )
         
-        # Step 6: Return formatted result
+        # Step 6: Generate visualization (post-execution, strictly additive)
+        visualization = None
+        try:
+            result_metadata = build_result_metadata(execution_result.data)
+            eligibility = check_eligibility(execution_result.data, result_metadata)
+            
+            if eligibility.eligible:
+                chart_spec = generate_chart_spec(
+                    execution_result.data,
+                    result_metadata,
+                    eligibility
+                )
+                if chart_spec:
+                    validation = validate_chart_spec(
+                        chart_spec.to_dict(),
+                        execution_result.data
+                    )
+                    if validation.valid:
+                        visualization = chart_spec.to_dict()
+                        logger.info(f"Visualization generated: {chart_spec.chart_type}")
+                    else:
+                        logger.warning(f"Chart validation failed: {validation.error}")
+        except Exception as viz_error:
+            logger.warning(f"Visualization generation failed (graceful degradation): {viz_error}")
+            # Continue without visualization - text answer still works
+        
+        # Step 7: Return formatted result with optional visualization
         return {
             "dataset_id": dataset_id,
             "result": {
                 **execution_result.data,
                 "message": formatted_message,  # AI-formatted natural language message
             },
+            "visualization": visualization,  # NEW: Chart spec or None
             "metadata": {
                 **execution_result.metadata,
                 "execution_time_ms": execution_result.execution_time_ms,
                 "rows_returned": execution_result.rows_returned,
                 "query_type": "sql",
                 "formatted_by": "ai",  # Indicate AI formatting was used
+                "visualization_eligible": visualization is not None,
             },
         }
         

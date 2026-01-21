@@ -26,6 +26,7 @@
     "react-dropzone": "^14.3.8",
     "react-hook-form": "^7.69.0",
     "react-vega": "^8.0.0",
+    "recharts": "^3.6.0",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
     "vega": "^6.2.0",

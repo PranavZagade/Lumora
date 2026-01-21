@@ -106,7 +106,7 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -252,17 +252,19 @@ class ApiClient {
     question: string
   ): Promise<{
     dataset_id: string;
-    intent: Record<string, unknown>;
+    intent?: Record<string, unknown>;
     result: Record<string, unknown>;
+    visualization?: Record<string, unknown> | null;  // Chart spec from backend
     metadata: Record<string, unknown>;
-    confidence: number;
+    confidence?: number;
   }> {
     return this.request<{
       dataset_id: string;
-      intent: Record<string, unknown>;
+      intent?: Record<string, unknown>;
       result: Record<string, unknown>;
+      visualization?: Record<string, unknown> | null;
       metadata: Record<string, unknown>;
-      confidence: number;
+      confidence?: number;
     }>(`/api/chat/${datasetId}/execute`, {
       method: "POST",
       headers: {
