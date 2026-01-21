@@ -123,10 +123,24 @@ export function AppContent() {
   } = useSessionStore();
 
   // Check API availability on mount
+  // Check API availability on mount with retries
   useEffect(() => {
-    api.healthCheck()
-      .then(() => setApiAvailable(true))
-      .catch(() => setApiAvailable(false));
+    const checkHealth = async (retries = 3, delay = 1000) => {
+      try {
+        await api.healthCheck();
+        setApiAvailable(true);
+      } catch (err) {
+        console.warn(`API check failed, retrying... (${retries} left)`);
+        if (retries > 0) {
+          setTimeout(() => checkHealth(retries - 1, delay * 2), delay);
+        } else {
+          console.error("API Health Check Failed:", err);
+          setApiAvailable(false);
+        }
+      }
+    };
+
+    checkHealth();
   }, []);
 
   // Cleanup animations on unmount
