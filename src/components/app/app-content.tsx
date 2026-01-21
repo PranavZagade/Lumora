@@ -99,7 +99,7 @@ export function AppContent() {
   const progressAnimRef = useRef<number | null>(null);
   const rowAnimRef = useRef<number | null>(null);
   const progressValueRef = useRef(0);
-  
+
   const {
     dataset,
     columnProfiles,
@@ -199,10 +199,10 @@ export function AppContent() {
     try {
       // Upload to backend API
       const response = await api.uploadDataset(file);
-      
+
       setStatus("processing");
       animateProgress(30);
-      
+
       // Get the full profile
       setProgressLabel("Reading rows…");
       animateProgress(40);
@@ -212,7 +212,7 @@ export function AppContent() {
         animateRows(profile.dataset.rows);
         setProgressLabel("Reading rows…");
       }
-      
+
       // Map API response to store format
       const datasetInfo: DatasetInfo = {
         id: profile.dataset.id,
@@ -221,17 +221,17 @@ export function AppContent() {
         columns: profile.dataset.columns,
         uploadedAt: new Date(profile.dataset.uploaded_at),
       };
-      
+
       const columns: ColumnInfo[] = profile.columns.map((col) => ({
         name: col.name,
         type: col.dtype === "boolean" ? "boolean" : col.dtype,
         nullCount: col.null_count,
         uniqueCount: col.unique_count,
       }));
-      
+
       setDataset(datasetInfo);
       setColumnProfiles(columns);
-      
+
       // Stage 3 — Analyzing structure
       setProgressLabel("Analyzing columns and data types…");
       animateProgress(85);
@@ -246,7 +246,7 @@ export function AppContent() {
         setProgressLabel("Checking for missing values and duplicates…");
         animateProgress(95);
         const healthResult = await api.getDataHealthCheck(response.dataset_id);
-        
+
         // Map API response to store format
         const mappedHealthCheck: HealthCheckResult = {
           issues: healthResult.issues.map((issue): HealthIssue => ({
@@ -263,13 +263,13 @@ export function AppContent() {
           summary: healthResult.summary,
           checksPerformed: healthResult.checks_performed,
         };
-        
+
         setHealthCheck(mappedHealthCheck);
       } catch (healthError) {
         console.error("Health check failed:", healthError);
         // Don't fail the whole upload if health check fails
       }
-      
+
       // Fetch structural insights in the background
       try {
         setProgressLabel("Finalizing dataset…");
@@ -303,11 +303,11 @@ export function AppContent() {
       } catch (questionsError) {
         console.error("Suggested questions fetch failed:", questionsError);
       }
-      
+
       setProgressLabel("Finalizing dataset…");
       animateProgress(100);
       setStatus("ready");
-      
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to upload file";
       setError(errorMessage);
@@ -315,7 +315,7 @@ export function AppContent() {
       setProgress(0);
       progressValueRef.current = 0;
       setProgressLabel(null);
-      
+
       addMessage({
         role: "assistant",
         content: `Sorry, there was an error processing your file: ${errorMessage}`,
@@ -402,31 +402,33 @@ export function AppContent() {
     try {
       // Execute question via API
       const result = await api.executeQuestion(dataset.id, content);
-      
+
       // Format result for display
       let responseText = "";
-      
+
       if (result.result.type === "dataset_summary") {
-        responseText = `This dataset contains **${result.result.rows.toLocaleString()}** rows and **${result.result.columns}** columns.`;
+        const summary = result.result as { rows: number; columns: number };
+        responseText = `This dataset contains **${summary.rows.toLocaleString()}** rows and **${summary.columns}** columns.`;
       } else if (result.result.type === "clarification") {
-        responseText = result.result.message || "Please clarify what you want to analyze.";
+        const clarification = result.result as { message?: string };
+        responseText = clarification.message || "Please clarify what you want to analyze.";
       } else if (result.result.type === "scalar") {
-        const agg = result.result.aggregation || "value";
-        const value = result.result.value;
         const scalarResult = result.result as {
           type: "scalar";
           value?: number;
           aggregation?: string;
           time_period?: string;
+          time_periods?: string[];
           dimension_value?: string;
+          dimension_values?: string[];
           tied?: boolean;
           tied_count?: number;
-          time_periods?: string[];
-          dimension_values?: string[];
         };
+        const agg = scalarResult.aggregation || "value";
+        const value = scalarResult.value;
         const tied = scalarResult.tied;
         const tiedCount = scalarResult.tied_count;
-        
+
         // Handle ties
         if (tied && tiedCount) {
           if (agg === "count") {
@@ -434,7 +436,7 @@ export function AppContent() {
           } else {
             responseText = `The ${agg} is **${value?.toLocaleString() || "0"}**`;
           }
-          
+
           // Handle time period ties
           if (scalarResult.time_periods) {
             const periods = scalarResult.time_periods;
@@ -444,7 +446,7 @@ export function AppContent() {
               responseText += ` in ${periods.length} time periods: ${periods.slice(0, 3).join(", ")}${periods.length > 3 ? `, and ${periods.length - 3} more` : ""}`;
             }
           }
-          
+
           // Handle dimension ties
           if (scalarResult.dimension_values) {
             const dims = scalarResult.dimension_values;
@@ -461,7 +463,7 @@ export function AppContent() {
           } else {
             responseText = `The ${agg} is **${value?.toLocaleString() || "0"}**`;
           }
-          
+
           if (scalarResult.time_period) {
             responseText += ` in ${scalarResult.time_period}`;
           }
@@ -470,8 +472,9 @@ export function AppContent() {
           }
         }
       } else if (result.result.type === "time_series") {
-        const data = result.result.data as Array<{ time: string; value: number }>;
-        const metricCol = result.result.metric_column;
+        const tsResult = result.result as { metric_column?: string; data: Array<{ time: string; value: number }> };
+        const data = tsResult.data;
+        const metricCol = tsResult.metric_column;
         responseText = `Here's how the ${metricCol ? `values in '${metricCol}'` : "values"} change over time:\n\n`;
         data.slice(0, 10).forEach((item) => {
           responseText += `- ${item.time}: ${item.value.toLocaleString()}\n`;
@@ -480,25 +483,33 @@ export function AppContent() {
           responseText += `\n... and ${data.length - 10} more time periods`;
         }
       } else if (result.result.type === "breakdown") {
-        const data = result.result.data as Array<{ dimension: string; value: number }>;
-        const metricCol = result.result.metric_column;
-        const dimCol = result.result.dimension_column;
+        const bdResult = result.result as { metric_column?: string; dimension_column?: string; data: Array<{ dimension: string; value: number }> };
+        const data = bdResult.data;
+        const metricCol = bdResult.metric_column;
+        const dimCol = bdResult.dimension_column;
         responseText = `Here's the breakdown${metricCol ? ` of ${metricCol}` : ""}${dimCol ? ` by ${dimCol}` : ""}:\n\n`;
         data.forEach((item) => {
           responseText += `- ${item.dimension}: ${item.value.toLocaleString()}\n`;
         });
       } else if (result.result.type === "ranking") {
-        const data = result.result.data as Array<{ group: string; value: number; rank: number }>;
-        const metricCol = result.result.metric_column;
-        const groupCol = result.result.group_column || result.result.dimension_column;
-        const agg = result.result.aggregation || "value";
-        
+        const rankResult = result.result as {
+          metric_column?: string;
+          group_column?: string;
+          dimension_column?: string;
+          aggregation?: string;
+          data: Array<{ group: string; value: number; rank: number }>;
+        };
+        const data = rankResult.data;
+        const metricCol = rankResult.metric_column;
+        const groupCol = rankResult.group_column || rankResult.dimension_column;
+        const agg = rankResult.aggregation || "value";
+
         if (agg === "count") {
           responseText = `Top ${data.length} ${groupCol ? `by ${groupCol}` : "results"}:\n\n`;
         } else {
           responseText = `Top ${data.length} ${groupCol ? `by ${groupCol}` : "results"}${metricCol ? ` (${agg} of ${metricCol})` : ""}:\n\n`;
         }
-        
+
         data.forEach((item) => {
           responseText += `${item.rank}. ${item.group}: ${item.value.toLocaleString()}\n`;
         });
