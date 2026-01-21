@@ -34,20 +34,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS configuration for frontend
-# Allow multiple ports for development (Next.js increments port if 3000 is in use)
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://localhost:3002",
-        "http://localhost:3003",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-        "http://127.0.0.1:3002",
-        "http://127.0.0.1:3003",
-    ],
+    allow_origins=["*"],  # Allow all origins for production, restrict later if needed
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

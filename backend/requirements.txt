@@ -1,6 +1,7 @@
 # FastAPI & Server
 fastapi==0.109.2
 uvicorn[standard]==0.27.1
+gunicorn==21.2.0
 python-multipart==0.0.9
 
 # Data Processing

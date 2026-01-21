@@ -40,3 +40,18 @@ next-env.d.ts
 # Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+backend/temp_data/
+
+# Virtual environments
+venv/
+backend/venv/
+.env
+
+# Runtime data
+temp_data/
+
+# Node / Next.js
+node_modules/
+.next/
