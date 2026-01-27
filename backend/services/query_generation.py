@@ -18,6 +18,8 @@ import logging
 
 # Load environment variables
 env_path = Path(__file__).parent.parent / ".env"
+if not env_path.exists():
+    env_path = Path(__file__).parent.parent.parent / ".env"
 load_dotenv(env_path)
 
 from groq import Groq

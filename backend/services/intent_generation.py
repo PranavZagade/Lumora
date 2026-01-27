@@ -17,8 +17,10 @@ from groq import Groq
 from services.groq_client import call_with_fallback
 
 # Load environment variables from .env file
-# Look for .env in backend directory (parent of services)
+# Look for .env in backend directory (parent of services) or project root
 env_path = Path(__file__).parent.parent / ".env"
+if not env_path.exists():
+    env_path = Path(__file__).parent.parent.parent / ".env"
 load_dotenv(env_path)
 from models.intent import (
     Intent,
