@@ -53,7 +53,7 @@ export interface ChartSpec {
 // Rendering limits
 const MAX_CHART_POINTS = 500;
 const MAX_AXIS_TICKS = 10;
-const MAX_CATEGORIES = 12;
+
 
 // Design system colors
 const CHART_COLORS = {
@@ -111,10 +111,10 @@ function CustomTooltip({
 
 export function ChartRenderer({ spec, height = 300, onFallbackNeeded }: ChartRendererProps) {
     const { chart_type, x_axis, y_axis, data, ui_hints } = spec;
-    const [isSampled, setIsSampled] = useState(false);
+    const [_, setIsSampled] = useState(false);
 
     // Check rendering limits and apply sampling if needed
-    const { processedData, sampledCount } = useMemo(() => {
+    const { processedData } = useMemo(() => {
         if (!data || data.length === 0) return { processedData: [], sampledCount: 0 };
 
         // Check if table fallback needed
