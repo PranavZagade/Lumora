@@ -218,7 +218,7 @@ async def execute_question(dataset_id: str, request: Dict[str, Any]) -> Dict[str
             "dataset_id": dataset_id,
             "result": {
                 "type": "clarification",
-                "message": "I couldn't understand your question. Could you rephrase it or be more specific?",
+                "message": f"I couldn't understand your question. Internal Error: {error_msg}",
             },
             "metadata": {"error": error_msg},
         }
