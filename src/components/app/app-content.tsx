@@ -13,6 +13,7 @@ import { HealthCheck } from "@/components/app/health-check";
 import { DatasetSummary } from "@/components/app/dataset-summary";
 import { InsightList } from "@/components/app/insight-card";
 import { SuggestedQuestions } from "@/components/app/suggested-questions";
+import { MappingSelector } from "@/components/app/mapping-selector";
 import { useSessionStore } from "@/stores/session";
 import { api, type SuggestedQuestion } from "@/lib/api";
 import type {
@@ -110,6 +111,9 @@ export function AppContent() {
     isTyping,
     status,
     error,
+    mappingActive,
+    mappingConcept,
+    mappingAvailableColumns,
     createSession,
     setDataset,
     setColumnProfiles,
@@ -120,7 +124,18 @@ export function AppContent() {
     setIsTyping,
     setStatus,
     setError,
+    setMappingState,
+    clearMappingState,
   } = useSessionStore();
+
+  // Debug: Monitor mapping state changes
+  useEffect(() => {
+    console.log("Mapping state changed:", {
+      mappingActive,
+      mappingConcept,
+      mappingAvailableColumns: mappingAvailableColumns?.length || 0,
+    });
+  }, [mappingActive, mappingConcept, mappingAvailableColumns]);
 
   // Check API availability on mount
   // Check API availability on mount with retries
@@ -417,6 +432,7 @@ export function AppContent() {
       // Execute question via API
       const result = await api.executeQuestion(dataset.id, content);
 
+<<<<<<< HEAD
       // Format result for display
       let responseText = "";
 
@@ -426,6 +442,69 @@ export function AppContent() {
       } else if (result.result.type === "clarification") {
         const clarification = result.result as { message?: string };
         responseText = clarification.message || "Please clarify what you want to analyze.";
+=======
+      // Debug: Log the full response structure
+      console.log("API Response:", JSON.stringify(result, null, 2));
+      console.log("Result type:", result.result?.type);
+
+      // Format result for display
+      let responseText = "";
+
+      // CRITICAL: Check for column_mapping_required FIRST, before any other processing
+      if (result.result?.type === "column_mapping_required") {
+        // Handle column mapping request - set explicit mapping state
+        const mappingResult = result.result as {
+          type: "column_mapping_required";
+          concept: string;
+          message?: string;
+          available_columns?: string[];
+        };
+
+        // Ensure available_columns is an array of strings
+        const availableColumns: string[] = Array.isArray(mappingResult.available_columns)
+          ? mappingResult.available_columns.filter((col): col is string => typeof col === 'string')
+          : [];
+
+        // Set explicit mapping state (this triggers the UI)
+        console.log("Setting mapping state:", {
+          active: true,
+          concept: mappingResult.concept,
+          columns: availableColumns,
+        });
+        setMappingState(true, mappingResult.concept, availableColumns);
+
+        // Add message for context (optional, for display)
+        addMessage({
+          role: "assistant",
+          content: mappingResult.message || `To answer this question, I need to know which column represents '${mappingResult.concept}'. Please select the column from your dataset.`,
+        });
+
+        setIsTyping(false);
+        return;  // Stop processing until mapping is saved
+      } else if (result.result?.type === "metadata") {
+        const metadataResult = result.result as { type: "metadata"; message?: string };
+        if (metadataResult.message && typeof metadataResult.message === "string") {
+          responseText = metadataResult.message;
+        }
+      } else if (result.result?.type === "dataset_summary") {
+        const summaryResult = result.result as {
+          type: "dataset_summary";
+          rows?: number;
+          columns?: number;
+        };
+        responseText = `This dataset contains **${(summaryResult.rows || 0).toLocaleString()}** rows and **${summaryResult.columns || 0}** columns.`;
+      } else if (result.result?.message && typeof result.result.message === "string") {
+        // Use backend-formatted message for all result types
+        responseText = result.result.message;
+      } else if (result.result.type === "clarification") {
+        // Regular clarification (not mapping-related)
+        const clarificationResult = result.result as {
+          type: "clarification";
+          message?: string;
+        };
+
+        responseText = clarificationResult.message || "Please clarify what you want to analyze.";
+>>>>>>> feature/visualization
       } else if (result.result.type === "scalar") {
         const scalarResult = result.result as {
           type: "scalar";
@@ -506,6 +585,7 @@ export function AppContent() {
           responseText += `- ${item.dimension}: ${item.value.toLocaleString()}\n`;
         });
       } else if (result.result.type === "ranking") {
+<<<<<<< HEAD
         const rankResult = result.result as {
           metric_column?: string;
           group_column?: string;
@@ -517,6 +597,12 @@ export function AppContent() {
         const metricCol = rankResult.metric_column;
         const groupCol = rankResult.group_column || rankResult.dimension_column;
         const agg = rankResult.aggregation || "value";
+=======
+        const data = result.result.data as Array<{ group: string; value: number; rank: number }>;
+        const metricCol = result.result.metric_column;
+        const groupCol = result.result.group_column || result.result.dimension_column;
+        const agg = result.result.aggregation || "value";
+>>>>>>> feature/visualization
 
         if (agg === "count") {
           responseText = `Top ${data.length} ${groupCol ? `by ${groupCol}` : "results"}:\n\n`;
@@ -527,6 +613,34 @@ export function AppContent() {
         data.forEach((item) => {
           responseText += `${item.rank}. ${item.group}: ${item.value.toLocaleString()}\n`;
         });
+      } else if (result.result.type === "empty") {
+        responseText = (result.result as { type: "empty"; message?: string }).message || "No results found.";
+      } else if (result.result.type === "table") {
+        const tableResult = result.result as {
+          type: "table";
+          data: Array<Record<string, unknown>>;
+          columns?: string[];
+        };
+        const data = tableResult.data;
+        const columns = tableResult.columns || (data.length > 0 ? Object.keys(data[0]) : []);
+
+        responseText = `Here are the results:\n\n`;
+        if (data.length > 0) {
+          // Show first 10 rows
+          data.slice(0, 10).forEach((row, idx) => {
+            responseText += `Row ${idx + 1}:\n`;
+            columns.forEach((col) => {
+              const val = row[col];
+              responseText += `  ${col}: ${val !== null && val !== undefined ? String(val) : "null"}\n`;
+            });
+            responseText += "\n";
+          });
+          if (data.length > 10) {
+            responseText += `... and ${data.length - 10} more rows`;
+          }
+        } else {
+          responseText = "No rows returned.";
+        }
       } else {
         responseText = "I received an unexpected result format. Please try rephrasing your question.";
       }
@@ -535,6 +649,7 @@ export function AppContent() {
       addMessage({
         role: "assistant",
         content: responseText,
+        visualization: result.visualization || null,  // Pass visualization from API
       });
     } catch (error) {
       setIsTyping(false);
@@ -544,7 +659,7 @@ export function AppContent() {
         content: `Sorry, I couldn't process that question: ${errorMessage}`,
       });
     }
-  }, [addMessage, setIsTyping, dataset]);
+  }, [addMessage, setIsTyping, setMappingState, dataset]);
 
   const handleQuestionSelect = useCallback(
     (question: SuggestedQuestion) => {
@@ -680,8 +795,60 @@ export function AppContent() {
                   <>
                     {/* Chat Messages */}
                     {messages.map((message) => (
-                      <ChatMessage key={message.id} message={message} />
+                      <div key={message.id}>
+                        <ChatMessage message={message} />
+                      </div>
                     ))}
+
+                    {/* Mapping Selector - Rendered based on explicit state, not message flags */}
+                    {(() => {
+                      console.log("Rendering check:", {
+                        mappingActive,
+                        mappingConcept,
+                        mappingAvailableColumns,
+                      });
+                      return mappingActive && mappingConcept;
+                    })() && (
+                        <div className="px-4 py-2">
+                          <MappingSelector
+                            missingConcepts={mappingConcept ? [mappingConcept] : []}
+                            availableColumns={mappingAvailableColumns}
+                            onSave={async (mappings) => {
+                              if (!dataset) return;
+                              try {
+                                // Save mappings
+                                const mappingEntries = Object.entries(mappings);
+                                for (const [concept, columnName] of mappingEntries) {
+                                  await api.saveMapping(dataset.id, concept, columnName);
+                                }
+                                // Clear mapping state
+                                clearMappingState();
+                                // Re-ask the original question
+                                const lastUserMessage = messages
+                                  .filter((m) => m.role === "user")
+                                  .pop();
+                                if (lastUserMessage) {
+                                  await handleSendMessage(lastUserMessage.content);
+                                }
+                              } catch (error) {
+                                console.error("Failed to save mapping:", error);
+                                addMessage({
+                                  role: "assistant",
+                                  content: "Failed to save the column mapping. Please try again.",
+                                });
+                              }
+                            }}
+                            onCancel={() => {
+                              // Clear mapping state
+                              clearMappingState();
+                              addMessage({
+                                role: "assistant",
+                                content: "Mapping cancelled. How else can I help?",
+                              });
+                            }}
+                          />
+                        </div>
+                      )}
 
                     {/* Typing Indicator */}
                     {isTyping && <TypingIndicator />}

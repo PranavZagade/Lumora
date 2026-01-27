@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 from dotenv import load_dotenv
 from groq import Groq
+from services.groq_client import call_with_fallback
 
 # Load environment variables from .env file
 # Look for .env in backend directory (parent of services)
@@ -37,7 +38,7 @@ from models.intent import (
 _groq_api_key = os.getenv("GROQ_API_KEY")
 if _groq_api_key:
     try:
-        client = Groq(api_key=_groq_api_key)
+        client: Optional[Groq] = Groq(api_key=_groq_api_key)
     except Exception as e:
         # Log error for debugging but don't fail module import
         import logging
@@ -163,8 +164,8 @@ Dataset metadata:
 Generate the intent JSON (ONLY JSON, no other text):"""
 
     try:
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",  # Updated model (llama-3.1-70b-versatile was decommissioned)
+        response = call_with_fallback(
+            client,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
