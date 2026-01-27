@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
     LineChart,
     Line,
@@ -111,7 +111,7 @@ function CustomTooltip({
 
 export function ChartRenderer({ spec, height = 300, onFallbackNeeded }: ChartRendererProps) {
     const { chart_type, x_axis, y_axis, data, ui_hints } = spec;
-    const [_, setIsSampled] = useState(false);
+
 
     // Check rendering limits and apply sampling if needed
     const { processedData } = useMemo(() => {
@@ -130,7 +130,7 @@ export function ChartRenderer({ spec, height = 300, onFallbackNeeded }: ChartRen
         if ((chart_type === "line" || chart_type === "area") && data.length > MAX_CHART_POINTS) {
             workingData = minMaxSample(data, MAX_CHART_POINTS, y_axis.field);
             sampled = data.length - workingData.length;
-            setIsSampled(true);
+
         }
 
         // Process labels
