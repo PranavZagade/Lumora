@@ -432,17 +432,6 @@ export function AppContent() {
       // Execute question via API
       const result = await api.executeQuestion(dataset.id, content);
 
-<<<<<<< HEAD
-      // Format result for display
-      let responseText = "";
-
-      if (result.result.type === "dataset_summary") {
-        const summary = result.result as { rows: number; columns: number };
-        responseText = `This dataset contains **${summary.rows.toLocaleString()}** rows and **${summary.columns}** columns.`;
-      } else if (result.result.type === "clarification") {
-        const clarification = result.result as { message?: string };
-        responseText = clarification.message || "Please clarify what you want to analyze.";
-=======
       // Debug: Log the full response structure
       console.log("API Response:", JSON.stringify(result, null, 2));
       console.log("Result type:", result.result?.type);
@@ -504,7 +493,6 @@ export function AppContent() {
         };
 
         responseText = clarificationResult.message || "Please clarify what you want to analyze.";
->>>>>>> feature/visualization
       } else if (result.result.type === "scalar") {
         const scalarResult = result.result as {
           type: "scalar";
@@ -585,24 +573,10 @@ export function AppContent() {
           responseText += `- ${item.dimension}: ${item.value.toLocaleString()}\n`;
         });
       } else if (result.result.type === "ranking") {
-<<<<<<< HEAD
-        const rankResult = result.result as {
-          metric_column?: string;
-          group_column?: string;
-          dimension_column?: string;
-          aggregation?: string;
-          data: Array<{ group: string; value: number; rank: number }>;
-        };
-        const data = rankResult.data;
-        const metricCol = rankResult.metric_column;
-        const groupCol = rankResult.group_column || rankResult.dimension_column;
-        const agg = rankResult.aggregation || "value";
-=======
         const data = result.result.data as Array<{ group: string; value: number; rank: number }>;
         const metricCol = result.result.metric_column;
         const groupCol = result.result.group_column || result.result.dimension_column;
         const agg = result.result.aggregation || "value";
->>>>>>> feature/visualization
 
         if (agg === "count") {
           responseText = `Top ${data.length} ${groupCol ? `by ${groupCol}` : "results"}:\n\n`;
